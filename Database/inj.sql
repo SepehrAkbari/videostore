@@ -1,0 +1,2 @@
+INSERT INTO Member (Fname, Lname, Address, Password, Email, Phone, Role, Num_disks_rented, Player_rented) VALUES
+('Chirag', 'Agarwal', 'Harlan Hall, 122', 'chirag123', 'chirag@lfc.edu', '888-011', 'Customer', 9, 0),
