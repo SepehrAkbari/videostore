@@ -131,6 +131,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_movie'])) {
         $message = "Charge per day must be greater than 0.";
     } elseif ($rental_period <= 0) {
         $message = "Rental period must be greater than 0.";
+    } elseif ($description) {
+            // Check for existing movie with same Title and Description
+            $check_stmt = $conn->prepare("SELECT Movie_ID FROM Movie WHERE Title = ? AND Description = ?");
+            $check_stmt->bind_param("ss", $title, $description);
+            $check_stmt->execute();
+            $check_stmt->store_result();
+    
+            if ($check_stmt->num_rows > 0) {
+                $message = "This movie has already been added.";
+                $check_stmt->close();
+            } else {
+                $check_stmt->close(); }
     } else {
         
         $conn->begin_transaction();
