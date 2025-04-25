@@ -1,0 +1,309 @@
+/*format headings*/
+
+h1 {
+    text-align: center;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+}
+
+h2 {
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+h3 {
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    border-bottom: 3px solid black;
+    padding-bottom: 5px;
+    font-size: 25px;
+}
+
+/*format messages*/
+.success_message {
+    background-color: green;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    
+}
+
+.error_message{
+    background-color: darkred;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    color: white; 
+    padding: 10px; 
+    border-radius: 5px;
+
+}
+
+/*format nav bar*/
+nav ul{
+    text-align: center;
+    position: top;
+    background-color: black;
+    margin-right: 0%;
+    margin-left: 0%;
+    padding: 0;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+}
+
+nav ul li {
+    list-style-type: none;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+    color: white;
+    font-size: 20px;
+    padding: 5px 20px;
+    margin: 5px 0;
+}
+
+nav ul li a:link {
+    color: white;
+    text-decoration: none; 
+    padding: 14px 16px; 
+    display: block; 
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+nav ul li a:visited {
+  color: lightgray;
+}
+
+nav ul li a:hover{
+    color: black;
+    background-color: white;
+}
+
+/* format dropdown button */
+.dropdown_button {
+    background-color: black;
+    color: white;
+    font-size: 20px;
+    border:none;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: center;
+    display: block;
+  }
+
+  .dropdown_button:hover{
+    background-color: white;
+    color: black;
+}
+
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    min-width: 160px;
+    background-color: black;
+    color: white;
+  }
+  
+  .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+  
+  .dropdown:hover .dropdown-content {
+    display: block;
+    background-color: black;
+    color: white;
+}
+
+/*format tables*/
+
+.table {
+    width: 100%;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+    padding: 10px;
+    border: 1px solid black;
+    box-shadow: 0 0 5px darkgrey;
+}
+
+.table th {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    background-color: darkgray;
+    color: white;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    font-size: 15px;
+}
+
+.table tr:nth-child(even) {
+  background-color:whitesmoke;
+}
+
+.table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    font-family: sans-serif, Arial, Helvetica, sans-serif;
+    font-size: 15px;
+}
+
+/* format forms */
+.form{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    display:grid;
+    place-content:center;
+    font-family:sans-serif;
+    border:1px solid #ddd;
+    padding:3vw;
+    flex-direction:column;
+    border-radius:5px;
+    text-align: left;
+    display: flex;
+}
+
+.form input[type='reset']:hover{
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    background-color: darkred;
+    color:white;
+}
+
+.form input[type='submit']:hover{
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    background-color: green;
+    color:white;
+}
+
+.form input, .form textarea, .form select{
+    width:100%;
+    padding:10px 10px;
+    margin-top:20px;
+    border:none;
+    outline:auto;
+
+}
+
+.form input[type="submit"],[type ='reset']{
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    width:100%;
+    padding:10px 10px;
+    margin-top:20px;
+    border:none;
+    outline:auto;
+}
+
+/*format delete and edit button*/
+
+.delete{
+    text-align: center;
+}
+
+.delete_button{
+    display: inline-block;
+    padding: 5px;
+  }
+
+
+  /* format edit form */
+
+.edit_form{
+    display: none;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:sans-serif;
+    border:1px solid #ddd;
+    padding:3vw;
+    flex-direction:column;
+    border-radius:5px;
+    text-align: left;
+}
+
+.edit_form button:hover{
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    background-color: darkred;
+    color:white;
+}
+
+.edit_form input[type='submit']:hover{
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    background-color: green;
+    color:white;
+}
+
+.edit_form input[type='text'], .close_edit{
+    width:100%;
+    padding:10px 10px;
+    margin-top:20px;
+    border:none;
+    outline:auto;
+
+}
+
+.edit_form input, .edit_form textarea, .edit_form select{
+    width:100%;
+    padding:10px 10px;
+    margin-top:20px;
+    border:none;
+    outline:auto;
+
+}
+
+.edit_form label{
+    margin-top: 20px;
+    display: block;
+}
+
+
+/*format return and rental links*/
+.link {
+    list-style-type: none;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 20px;
+    padding: 5px 10px;
+    text-align: center;
+    border-radius: 5px;
+    border: 2px black;
+}
+
+.link a:link {
+    color: black;
+    text-decoration: none; 
+    padding: 5px 10px; 
+    display: block; 
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    background-color: darkgray;
+}
+
+.link a:visited {
+  color: black;
+}
+
+.link a:hover{
+    color: white;
+    background-color: black;
+}
+
+
