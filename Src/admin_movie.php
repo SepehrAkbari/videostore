@@ -7,7 +7,7 @@ session_start();
 require_once 'db_connect.php';
 
 if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Admin') {
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -32,6 +32,7 @@ while ($row = $result->fetch_assoc()) {
 $results = [];
 $no_results = false;
 $message = '';
+$success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
     $genre = isset($_POST['genre']) && $_POST['genre'] !== '' ? $_POST['genre'] : null;
@@ -130,6 +131,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_movie'])) {
         $message = "Charge per day must be greater than 0.";
     } elseif ($rental_period <= 0) {
         $message = "Rental period must be greater than 0.";
+    } elseif ($description) {
+            // Check for existing movie with same Title and Description
+            $check_stmt = $conn->prepare("SELECT Movie_ID FROM Movie WHERE Title = ? AND Description = ?");
+            $check_stmt->bind_param("ss", $title, $description);
+            $check_stmt->execute();
+            $check_stmt->store_result();
+    
+            if ($check_stmt->num_rows > 0) {
+                $message = "This movie has already been added.";
+                $check_stmt->close();
+            } else {
+                $check_stmt->close(); }
     } else {
         
         $conn->begin_transaction();
@@ -166,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_movie'])) {
             }
 
             $conn->commit();
-            $message = "Movie and its copies added successfully.";
+            $success_message = "Movie and its copies added successfully.";
         } catch (Exception $e) {
             $conn->rollback();
             $message = "Error adding movie: " . htmlspecialchars($e->getMessage());
@@ -320,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_movie'])) {
             }
 
             $conn->commit();
-            $message = "Movie updated successfully.";
+            $success_message = "Movie updated successfully.";
         } catch (Exception $e) {
             $conn->rollback();
             $message = "Error updating movie: " . htmlspecialchars($e->getMessage());
@@ -364,7 +377,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_movie'])) {
             $stmt->close();
 
             $conn->commit();
-            $message = "Movie and its associated entries deleted successfully.";
+            $success_message = "Movie and its associated entries deleted successfully.";
         } catch (Exception $e) {
             $conn->rollback();
             $message = "Error deleting movie: " . htmlspecialchars($e->getMessage());
@@ -376,58 +389,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_movie'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script>function openForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "block"; // Show the form
+  } 
+}
+
+function closeForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "none"; // Hide the form
+  }
+}
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Movies - VideoStore</title>
+    <link rel="stylesheet" href="style sheet\total_style.css">
 </head>
 <body>
-    <h2>Manage Movies</h2>
+    <h1>Manage Movies</h1>
     <nav>
         <ul>
-            <li><a href="admin_manage.php">Back to Manage</a></li>
-            <li><a href="admin_main.php">Dashboard</a></li>
+            <li ><a href = "member_main.php">User View</a></li>
+            <li><a href="admin_main.php">Home</a></li>
+            <li class="dropdown"><button class = 'dropdown_button'>Manage</button>
+            <div class="dropdown-content">
+                <a href="admin_members.php">Members</a>
+                <a href="admin_movie.php">Movies</a>
+                <a href="admin_player.php">Players</a>
+                <a href = "admin_admins.php">Admins</a>
+            </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
 
     <?php if (!empty($message)): ?>
-        <p><?php echo htmlspecialchars($message); ?></p>
+        <p class ="error_message"><?php echo htmlspecialchars($message); ?></p>
+    <?php endif; ?>
+    <?php if (!empty($success_message)): ?>
+        <p class ="success_message"><?php echo htmlspecialchars($success_message); ?></p>
     <?php endif; ?>
 
-    <h3>Add New Movie</h3>
-    <form method="POST" action="">
+    <h2>Add New Movie</h2>
+    <form class='form'  method="POST" action="">
         <label for="title">Title:</label>
-        <input type="text" id="title" name="title" required>
+        <input placeholder ='Title' type="text" id="title" name="title" required>
         <br>
         <label for="genre">Genre:</label>
-        <input type="text" id="genre" name="genre">
+        <input placeholder = "Genre" type="text" id="genre" name="genre">
         <br>
         <label for="producer">Producer:</label>
-        <input type="text" id="producer" name="producer">
+        <input placeholder = "Producer" type="text" id="producer" name="producer">
         <br>
         <label for="director">Director:</label>
-        <input type="text" id="director" name="director">
+        <input placeholder = "Director" type="text" id="director" name="director">
         <br>
         <label for="actor1">Actor 1:</label>
-        <input type="text" id="actor1" name="actor1">
+        <input placeholder = "Main Actor" type="text" id="actor1" name="actor1">
         <br>
         <label for="actor2">Actor 2:</label>
-        <input type="text" id="actor2" name="actor2">
+        <input placeholder = "Main Actor" type="text" id="actor2" name="actor2">
         <br>
         <label for="description">Description:</label>
-        <textarea id="description" name="description"></textarea>
+        <textarea placeholder = "Write Description Here" id="description" name="description"></textarea>
         <br>
         <label for="release_date">Release Date (YYYY-MM-DD):</label>
-        <input type="text" id="release_date" name="release_date">
+        <input placeholder = "Release Date: YYYY-MM-DD" type="text" id="release_date" name="release_date">
         <br>
         <label for="rating">Rating (0-10):</label>
-        <input type="number" id="rating" name="rating" step="0.1" min="0" max="10">
+        <input placeholder = "Rating Out Of 10" type="number" id="rating" name="rating" step="0.1" min="0" max="10">
         <br>
         <label for="num_dvd">Number of DVDs:</label>
-        <input type="number" id="num_dvd" name="num_dvd" min="0" value="1">
+        <input placeholder = "Number of DVDs" type="number" id="num_dvd" name="num_dvd" min="0" value="1">
         <br>
         <label for="num_blu">Number of Blu-Rays:</label>
-        <input type="number" id="num_blu" name="num_blu" min="0" value="0">
+        <input placeholder = "Number of Blu-Ray" type="number" id="num_blu" name="num_blu" min="0" value="0">
         <br>
         <label for="store_id">Store:</label>
         <select id="store_id" name="store_id" required>
@@ -446,12 +486,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_movie'])) {
         <input type="number" id="rental_period" name="rental_period" min="1" value="7" required>
         <br>
         <input type="submit" name="add_movie" value="Add Movie">
+        <input type="reset" value="Clear Form">
     </form>
 
-    <h3>Search Movies</h3>
-    <form method="POST" action="">
+    <h2>Search Movies</h2>
+    <form class ='form' method="POST" action="">
         <label for="movie_id">Movie ID:</label>
-        <input type="text" id="movie_id" name="movie_id">
+        <input placeholder = "Movie ID" type="text" id="movie_id" name="movie_id">
         <br>
         <label for="genre">Genre:</label>
         <select id="genre" name="genre">
@@ -464,43 +505,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_movie'])) {
         </select>
         <br>
         <label for="title">Title:</label>
-        <input type="text" id="title" name="title" value="<?php echo isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''; ?>">
+        <input placeholder = 'Title' type="text" id="title" name="title" value="<?php echo isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''; ?>">
         <br>
         <label for="producer">Producer:</label>
-        <input type="text" id="producer" name="producer" value="<?php echo isset($_POST['producer']) ? htmlspecialchars($_POST['producer']) : ''; ?>">
+        <input placeholder = "Producer" type="text" id="producer" name="producer" value="<?php echo isset($_POST['producer']) ? htmlspecialchars($_POST['producer']) : ''; ?>">
         <br>
         <label for="director">Director:</label>
-        <input type="text" id="director" name="director" value="<?php echo isset($_POST['director']) ? htmlspecialchars($_POST['director']) : ''; ?>">
+        <input placeholder = "Director" type="text" id="director" name="director" value="<?php echo isset($_POST['director']) ? htmlspecialchars($_POST['director']) : ''; ?>">
         <br>
         <label for="actor1">Actor 1:</label>
-        <input type="text" id="actor1" name="actor1" value="<?php echo isset($_POST['actor1']) ? htmlspecialchars($_POST['actor1']) : ''; ?>">
+        <input placeholder = "Main Actor" type="text" id="actor1" name="actor1" value="<?php echo isset($_POST['actor1']) ? htmlspecialchars($_POST['actor1']) : ''; ?>">
         <br>
         <label for="actor2">Actor 2:</label>
-        <input type="text" id="actor2" name="actor2" value="<?php echo isset($_POST['actor2']) ? htmlspecialchars($_POST['actor2']) : ''; ?>">
+        <input placeholder = "Main Actor" type="text" id="actor2" name="actor2" value="<?php echo isset($_POST['actor2']) ? htmlspecialchars($_POST['actor2']) : ''; ?>">
         <br>
+
         <input type="submit" name="search" value="Search">
+        <input type="reset" value="Clear Form">
     </form>
 
-    <h3>Movie List</h3>
+    <h2>Movie List</h2>
     <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])): ?>
         <?php if ($no_results): ?>
-            <p>No movies found matching your criteria.</p>
+            <p class="error_message">No movies found matching your criteria.</p>
         <?php else: ?>
+            <table class='table'>
+            <tr>
+                    <th>Movie ID</th>
+                    <th>Title</th>
+                    <th>Genre</th>
+                    <th>Producer</th>
+                    <th>Director</th>
+                    <th>Actor</th>
+                    <th>Description</th>
+                    <th>Release Date</th>
+                    <th>Rating</th>
+                    <th>Number of DVDs</th>
+                    <th>Number of Blu-Rays</th>
+                    <th>Actions</th>
+                </tr>
             <?php foreach ($results as $movie): ?>
-                <div>
-                    <h4><?php echo htmlspecialchars($movie['Title']); ?> (ID: <?php echo htmlspecialchars($movie['Movie_ID']); ?>)</h4>
-                    <p><strong>Genre:</strong> <?php echo htmlspecialchars($movie['Genre'] ?? 'N/A'); ?></p>
-                    <p><strong>Producer:</strong> <?php echo htmlspecialchars($movie['Producer'] ?? 'N/A'); ?></p>
-                    <p><strong>Director:</strong> <?php echo htmlspecialchars($movie['Director'] ?? 'N/A'); ?></p>
-                    <p><strong>Actors:</strong> <?php echo htmlspecialchars($movie['Actor1'] ?? 'N/A'); ?>, <?php echo htmlspecialchars($movie['Actor2'] ?? 'N/A'); ?></p>
-                    <p><strong>Description:</strong> <?php echo htmlspecialchars($movie['Description'] ?? 'N/A'); ?></p>
-                    <p><strong>Release Date:</strong> <?php echo htmlspecialchars($movie['Release_date'] ?? 'N/A'); ?></p>
-                    <p><strong>Rating:</strong> <?php echo htmlspecialchars($movie['Rating'] ?? 'N/A'); ?>/10</p>
-                    <p><strong>Number of DVDs:</strong> <?php echo htmlspecialchars($movie['Num_DVD']); ?></p>
-                    <p><strong>Number of Blu-Rays:</strong> <?php echo htmlspecialchars($movie['Num_Blu']); ?></p>
+                    <tr>
+                        <td><?php echo htmlspecialchars($movie['Movie_ID']); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Title']); ?> </td>
+                        <td><?php echo htmlspecialchars($movie['Genre'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Producer'] ?? 'N/A'); ?></t>
+                        <td><?php echo htmlspecialchars($movie['Director'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Actor1'] ?? 'N/A'); ?> <br> <br><?php echo htmlspecialchars($movie['Actor2'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Description'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Release_date'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($movie['Rating'] ?? 'N/A'); ?>/10</td>
+                        <td><?php echo htmlspecialchars($movie['Num_DVD']); ?></t>
+                        <td><?php echo htmlspecialchars($movie['Num_Blu']); ?></td>
+                        <td class = 'delete'>
+                        <form class="delete_button" method="POST" action="">
+                            <input type="hidden" name="movie_id" value="<?php echo htmlspecialchars($movie['Movie_ID']); ?>">
+                            <input type="submit" name="delete_movie" value="Delete">
+                        </form>
+                        <form class = 'delete_button' method="post" action="">
+                            <input type="hidden" name="show_edit" value="1">
+                            <button type="button" name="show_edit" onclick="openForm('<?php echo $movie['Movie_ID']; ?>')">Edit</button>
+                        </form>
 
-                    <h4>Edit Movie</h4>
-                    <form method="POST" action="">
+                        </td>
+                    </tr>
+
+                    <div class = 'edit_form' id ="edit_form_<?php echo $movie['Movie_ID']; ?>">
+                    <h3>Edit Movie - <?php echo htmlspecialchars($movie['Title']); ?> </h3>
+                    <form class ='form' method="POST" action="">
                         <input type="hidden" name="movie_id" value="<?php echo htmlspecialchars($movie['Movie_ID']); ?>">
                         <label for="title_<?php echo $movie['Movie_ID']; ?>">Title:</label>
                         <input type="text" id="title_<?php echo $movie['Movie_ID']; ?>" name="title" value="<?php echo htmlspecialchars($movie['Title']); ?>" required>
@@ -536,15 +608,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_movie'])) {
                         <input type="number" id="num_blu_<?php echo $movie['Movie_ID']; ?>" name="num_blu" min="0" value="<?php echo htmlspecialchars($movie['Num_Blu']); ?>">
                         <br>
                         <input type="submit" name="edit_movie" value="Update Movie">
+                        <button class ='close_edit' type="button" onclick = "closeForm('<?php echo $movie['Movie_ID']; ?>')">Close</button>
                     </form>
-
-                    <form method="POST" action="">
-                        <input type="hidden" name="movie_id" value="<?php echo htmlspecialchars($movie['Movie_ID']); ?>">
-                        <input type="submit" name="delete_movie" value="Delete Movie">
-                    </form>
-                </div>
-                <hr>
+                    </div>
             <?php endforeach; ?>
+            </table>
         <?php endif; ?>
     <?php else: ?>
         <p>Please use the search form to find movies.</p>

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
@@ -13,6 +13,7 @@ if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catalog - VideoStore</title>
+    <link rel="stylesheet" href="total_style.css">
 </head>
 <body>
     <h2>Catalog</h2>

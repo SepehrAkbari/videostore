@@ -2,7 +2,7 @@
 session_start();
 require_once 'db_connect.php';
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
@@ -80,8 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Fetch available copies for each movie
         $movie_id = $row['Movie_ID'];
         $stmt2 = $conn->prepare("
-            SELECT Object_ID, Type 
-            FROM Store_Object 
+            SELECT so.Object_ID, so.Type, s.Address
+            FROM Store_Object so 
+            JOIN Store s ON s.Store_ID = so.Store_ID
             WHERE Movie_ID = ? AND Player_ID IS NULL
         ");
         $stmt2->bind_param("i", $movie_id);
@@ -102,29 +103,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt->close();
 }
+
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>function openForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "block"; // Show the form
+  } 
+}
+
+function closeForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "none"; // Hide the form
+  }
+}
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Movies - VideoStore</title>
+    <link rel="stylesheet" href="style sheet/total_style.css">
 </head>
 <body>
     <h2>Browse Movies</h2>
     <nav>
         <ul>
-            <li><a href="member_catalog.php">Back to Catalog</a></li>
-            <li><a href="member_main.php">Dashboard</a></li>
+            <?php if ($_SESSION['Role'] == 'Admin'): ?>
+                <li><a href="admin_main.php">Admin Dashboard</a></li>
+            <?php endif; ?>
+            <li><a href="member_main.php">Home</a></li>
+            <li class="dropdown"><button class="dropdown_button">Catalog</button>
+                <div class="dropdown-content">
+                    <a href="movies.php">Movies</a>
+                    <a href="players.php">Players</a>
+                </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
 
     <h3>Search Movies</h3>
-    <form method="POST" action="">
+    <form class ="form" method="POST" action="">
         <label for="movie_id">Movie ID:</label>
-        <input type="text" id="movie_id" name="movie_id">
+        <input placeholder = "Movie ID" type="text" id="movie_id" name="movie_id">
         <br>
         <label for="genre">Genre:</label>
         <select id="genre" name="genre">
@@ -137,21 +164,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </select>
         <br>
         <label for="title">Title:</label>
-        <input type="text" id="title" name="title" value="<?php echo isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''; ?>">
+        <input placeholder = "Title" type="text" id="title" name="title" value="<?php echo isset($_POST['title']) ? htmlspecialchars($_POST['title']) : ''; ?>">
         <br>
         <label for="producer">Producer:</label>
-        <input type="text" id="producer" name="producer" value="<?php echo isset($_POST['producer']) ? htmlspecialchars($_POST['producer']) : ''; ?>">
+        <input placeholder = "Producer" type="text" id="producer" name="producer" value="<?php echo isset($_POST['producer']) ? htmlspecialchars($_POST['producer']) : ''; ?>">
         <br>
         <label for="director">Director:</label>
-        <input type="text" id="director" name="director" value="<?php echo isset($_POST['director']) ? htmlspecialchars($_POST['director']) : ''; ?>">
+        <input placeholder = "Director" type="text" id="director" name="director" value="<?php echo isset($_POST['director']) ? htmlspecialchars($_POST['director']) : ''; ?>">
         <br>
         <label for="actor1">Actor 1:</label>
-        <input type="text" id="actor1" name="actor1" value="<?php echo isset($_POST['actor1']) ? htmlspecialchars($_POST['actor1']) : ''; ?>">
+        <input placeholder = "Main Actor" type="text" id="actor1" name="actor1" value="<?php echo isset($_POST['actor1']) ? htmlspecialchars($_POST['actor1']) : ''; ?>">
         <br>
         <label for="actor2">Actor 2:</label>
-        <input type="text" id="actor2" name="actor2" value="<?php echo isset($_POST['actor2']) ? htmlspecialchars($_POST['actor2']) : ''; ?>">
+        <input placeholder = "Main Actor" type="text" id="actor2" name="actor2" value="<?php echo isset($_POST['actor2']) ? htmlspecialchars($_POST['actor2']) : ''; ?>">
         <br>
         <input type="submit" value="Search">
+        <input type="reset" value="Reset">
     </form>
 
     <h3>Movie Catalog</h3>
@@ -160,31 +188,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>No movies found matching your criteria.</p>
         <?php else: ?>
             <?php foreach ($results as $movie): ?>
-                <div>
-                    <h4><?php echo htmlspecialchars($movie['Title']); ?> (ID: <?php echo htmlspecialchars($movie['Movie_ID']); ?>)</h4>
-                    <p><strong>Genre:</strong> <?php echo htmlspecialchars($movie['Genre'] ?? 'N/A'); ?></p>
-                    <p><strong>Producer:</strong> <?php echo htmlspecialchars($movie['Producer'] ?? 'N/A'); ?></p>
-                    <p><strong>Director:</strong> <?php echo htmlspecialchars($movie['Director'] ?? 'N/A'); ?></p>
-                    <p><strong>Actors:</strong> <?php echo htmlspecialchars($movie['Actor1'] ?? 'N/A'); ?>, <?php echo htmlspecialchars($movie['Actor2'] ?? 'N/A'); ?></p>
-                    <p><strong>Description:</strong> <?php echo htmlspecialchars($movie['Description'] ?? 'N/A'); ?></p>
-                    <p><strong>Release Date:</strong> <?php echo htmlspecialchars($movie['Release_date'] ?? 'N/A'); ?></p>
-                    <p><strong>Rating:</strong> <?php echo htmlspecialchars($movie['Rating'] ?? 'N/A'); ?>/10</p>
-                    <p><strong>Available Copies:</strong> DVD: <?php echo htmlspecialchars($movie['Num_DVD']); ?>, Blu-Ray: <?php echo htmlspecialchars($movie['Num_Blu']); ?></p>
+                <table class="table">
+                <tr>
+                    <th>Title</th>
+                    <th>Genre</th>
+                    <th>Producer</th>
+                    <th>Director</th>
+                    <th>Actors</th>
+                    <th>Description</th>
+                    <th>Released </th>
+                    <th>Rating</th>
+                    <th>Available Copies</th>
+                </tr>
+                <tr>
+                    <td><strong><?php echo htmlspecialchars($movie['Title']); ?></strong><br> (ID: <?php echo htmlspecialchars($movie['Movie_ID']); ?>)</td>
+                    <td><?php echo htmlspecialchars($movie['Genre'] ?? 'N/A'); ?></td>
+                    <td><?php echo htmlspecialchars($movie['Producer'] ?? 'N/A'); ?></td>
+                    <td><?php echo htmlspecialchars($movie['Director'] ?? 'N/A'); ?></td>
+                    <td><?php echo htmlspecialchars($movie['Actor1'] ?? 'N/A'); ?> <br><br> <?php echo htmlspecialchars($movie['Actor2'] ?? 'N/A'); ?></td>
+                    <td><?php echo htmlspecialchars($movie['Description'] ?? 'N/A'); ?></td>
+                    <td><?php echo htmlspecialchars($movie['Release_date'] ? substr($movie['Release_date'], 0, 4) : 'N/A'); ?></td>
+                    <td><p><?php echo htmlspecialchars($movie['Rating'] ?? 'N/A'); ?>/10</p> </td>
+                    <td>
                     <?php if (!empty($movie['Copies'])): ?>
-                        <p><strong>Select Copy to Rent/Reserve:</strong></p>
-                        <?php foreach ($movie['Copies'] as $copy): ?>
-                            <p>
-                                Copy ID: <?php echo htmlspecialchars($copy['Object_ID']); ?> (<?php echo htmlspecialchars($copy['Type']); ?>)
-                                <a href="checkout.php?object_id=<?php echo htmlspecialchars($copy['Object_ID']); ?>">Rent</a>
-                                <a href="reserve.php?object_id=<?php echo htmlspecialchars($copy['Object_ID']); ?>">Reserve</a>
-                            </p>
-                        <?php endforeach; ?>
+                        
+                        <form class="rent_button" method="POST" action="">
+                            <input type="hidden" name="show_edit" value="1">
+                            <button type="button" name="show_edit" onclick="openForm('<?php echo $movie['Movie_ID']; ?>')">Select</button>
+                        </form>
+                        </td>
+                        </tr>
+                        </table>
+
+                        <div class="edit_form" id="edit_form_<?php echo $movie['Movie_ID']; ?>">
+                            <h3>Rent Movie - <?php echo htmlspecialchars($movie['Title']); ?> </h3>
+                            <table class="table">
+                            <tr>
+                                        <th>ID</th>
+                                        <th>Type</th>
+                                        <th>Location</th>
+                                        <th>Rent/Reserve</th>
+                                </tr>
+                            <?php foreach ($movie['Copies'] as $copy): ?>
+                                <tr >
+                                    <td> <?php echo htmlspecialchars($copy['Object_ID']); ?> </td>
+                                    <td> <?php echo htmlspecialchars($copy['Type']); ?> </td>
+                                    <td><?php echo htmlspecialchars($copy['Address']); ?></td>
+                                    <td class="link"><a href="checkout.php?object_id=<?php echo htmlspecialchars($copy['Object_ID']); ?>">Rent</a> <br>
+                                    <a href="reserve.php?object_id=<?php echo htmlspecialchars($copy['Object_ID']); ?>">Reserve</a></t>
+                                </tr>
+                                <?php endforeach; ?>
+                                <button class="close_edit" type="button" onclick="closeForm('<?php echo $movie['Movie_ID']; ?>')">Close</button>
+                                </table>
+                            </div>
                     <?php else: ?>
                         <p>No copies available.</p>
                     <?php endif; ?>
-                </div>
-                <hr>
             <?php endforeach; ?>
+            </table>
         <?php endif; ?>
     <?php else: ?>
         <p>Please use the search form to find movies.</p>

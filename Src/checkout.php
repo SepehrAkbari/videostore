@@ -2,13 +2,14 @@
 session_start();
 require_once 'db_connect.php';
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
 
 $userID = $_SESSION['UserID'];
 $message = '';
+$success_message ='';
 $object = null;
 
 if (!isset($_GET['object_id']) || !is_numeric($_GET['object_id'])) {
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_checkout'])) 
         $message = "Please enter a valid start date.";
     } else {
         $start_date = date('Y-m-d', strtotime($start_date));
-        $current_date = date('Y-m-d');
+        $current_date = date('Y-m-d', strtotime('-1 day'));
         if ($start_date < $current_date) {
             $message = "Checkout date cannot be in the past.";
         } else {
@@ -93,40 +94,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_checkout'])) 
                     $stmt->execute();
                     $stmt->close();
 
-                    $message = "Checkout successful! The item is due on $due_date.";
+                    $success_message = "Checkout successful! The item is due on $due_date.";
                     $object = null;
                 } else {
                     $message = "Error checking out the item.";
                 }
+                }
             }
         }
     }
-}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - VideoStore</title>
+    <link rel="stylesheet" href="style sheet/total_style.css">
 </head>
 <body>
     <h2>Checkout</h2>
     <nav>
         <ul>
-            <li><a href="member_main.php">Dashboard</a></li>
-            <li><a href="member_catalog.php">Catalog</a></li>
-            <li><a href="member_reserved.php">My Reserved</a></li>
-            <li><a href="member_stuff.php">My Stuff</a></li>
+            <?php if ($_SESSION['Role'] == 'Admin'): ?>
+                <li><a href="admin_main.php">Admin Dashboard</a></li>
+            <?php endif; ?>
+            <li><a href="member_main.php">Home</a></li>
+            <li class="dropdown"><button class="dropdown_button">Catalog</button>
+                <div class="dropdown-content">
+                    <a href="movies.php">Movies</a>
+                    <a href="players.php">Players</a>
+                </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
 
-    <?php if (!empty($message)): ?>
-        <p><?php echo htmlspecialchars($message); ?></p>
-        <a href="member_main.php">Back to Dashboard</a>
+    <?php if (!empty($success_message)): ?>
+        <p class="success_message"><?php echo htmlspecialchars($success_message); ?></p>
+        
     <?php elseif ($object): ?>
+        <?php if (!empty($message)): ?>
+            <p class="error_message"><?php echo htmlspecialchars($message); ?></p>
+        <?php endif; ?>
         <h3>Checkout Item</h3>
         <p>
             <strong>Item:</strong> 
@@ -146,9 +158,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_checkout'])) 
         <p><strong>Charge per Day:</strong> $<?php echo htmlspecialchars($object['Charge_per_day']); ?></p>
         <p><strong>Rental Period:</strong> <?php echo htmlspecialchars($object['Rental_period']); ?> days</p>
 
-        <form method="POST" action="">
+        <form class="form" method="POST" action="">
             <label for="start_date">Checkout Date (YYYY-MM-DD):</label>
-            <input type="text" id="start_date" name="start_date" required>
+            <input placeholder = 'YYYY-MM-DD' type="text" id="start_date" name="start_date" required>
             <br>
             <?php
             if (isset($_POST['start_date']) && strtotime($_POST['start_date'])) {
@@ -168,10 +180,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_checkout'])) 
             <input type="submit" name="confirm_checkout" value="Confirm Checkout">
         </form>
         <br>
-        <a href="member_catalog.php">Back to Catalog</a>
     <?php else: ?>
         <p>No item selected for checkout.</p>
-        <a href="member_catalog.php">Back to Catalog</a>
     <?php endif; ?>
 </body>
 </html>

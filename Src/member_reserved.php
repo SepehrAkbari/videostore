@@ -2,7 +2,7 @@
 session_start();
 require_once 'db_connect.php';
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Reserved Items - VideoStore</title>
+    <link rel="stylesheet" href="style sheet/total_style.css">
 </head>
 <body>
     <h2>My Reserved Items</h2>

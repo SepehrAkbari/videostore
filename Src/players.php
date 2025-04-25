@@ -2,7 +2,7 @@
 session_start();
 require_once 'db_connect.php';
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
@@ -59,21 +59,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Players - VideoStore</title>
+    <link rel="stylesheet" href="style sheet/total_style.css">
 </head>
 <body>
     <h2>Browse Players</h2>
     <nav>
         <ul>
-            <li><a href="member_catalog.php">Back to Catalog</a></li>
-            <li><a href="member_main.php">Dashboard</a></li>
+            <?php if ($_SESSION['Role'] == 'Admin'): ?>
+                <li><a href="admin_main.php">Admin Dashboard</a></li>
+            <?php endif; ?>
+            <li><a href="member_main.php">Home</a></li>
+            <li class="dropdown"><button class="dropdown_button">Catalog</button>
+                <div class="dropdown-content">
+                    <a href="movies.php">Movies</a>
+                    <a href="players.php">Players</a>
+                </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
 
     <h3>Search Players</h3>
-    <form method="POST" action="">
+    <form class="form" method="POST" action="">
         <label for="player_id">Player ID:</label>
-        <input type="text" id="player_id" name="player_id">
+        <input placeholder = "Player ID" type="text" id="player_id" name="player_id">
         <br>
         <label for="generation">Generation:</label>
         <select id="generation" name="generation">
@@ -84,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </select>
         <br>
         <input type="submit" value="Search">
+        <input type="reset" value="Reset">
     </form>
 
     <h3>Player Catalog</h3>
@@ -91,18 +101,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($no_results): ?>
             <p>No players found matching your criteria.</p>
         <?php else: ?>
+            <table class="table">
+                <tr>
+                    <th>Player ID</th>
+                    <th>Generation</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                </tr>
             <?php foreach ($results as $player): ?>
-                <div>
-                    <h4>Player ID: <?php echo htmlspecialchars($player['Player_ID']); ?></h4>
-                    <p><strong>Generation:</strong> <?php echo htmlspecialchars($player['Generation']); ?></p>
-                    <p><strong>Type:</strong> <?php echo htmlspecialchars($player['Type']); ?></p>
-                    <p>
-                        <a href="checkout.php?object_id=<?php echo htmlspecialchars($player['Object_ID']); ?>">Rent</a>
-                        <a href="reserve.php?object_id=<?php echo htmlspecialchars($player['Object_ID']); ?>">Reserve</a>
-                    </p>
-                </div>
-                <hr>
+                <tr> 
+                    <td><?php echo htmlspecialchars($player['Player_ID']); ?></td>
+                    <td><?php echo htmlspecialchars($player['Generation']); ?></td>
+                    <td><?php echo htmlspecialchars($player['Type']); ?></td>
+                    <td class="link"><a href="checkout.php?object_id=<?php echo htmlspecialchars($player['Object_ID']); ?>">Rent</a></td> 
+                </tr>
             <?php endforeach; ?>
+            </table>
         <?php endif; ?>
     <?php else: ?>
         <p>Please use the search form to find players.</p>

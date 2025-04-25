@@ -7,7 +7,7 @@ session_start();
 require_once 'db_connect.php';
 
 if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Admin') {
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -25,6 +25,7 @@ while ($row = $result->fetch_assoc()) {
 $results = [];
 $no_results = false;
 $message = '';
+$success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
     $player_id = isset($_POST['player_id']) && trim($_POST['player_id']) !== '' ? trim($_POST['player_id']) : null;
@@ -101,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_player'])) {
             $stmt->close();
 
             $conn->commit();
-            $message = "Player and its store object added successfully.";
+            $success_message = "Player and its store object added successfully.";
         } catch (Exception $e) {
             $conn->rollback();
             $message = "Error adding player: " . htmlspecialchars($e->getMessage());
@@ -119,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_player'])) {
         $stmt = $conn->prepare("UPDATE Player SET Generation = ? WHERE Player_ID = ?");
         $stmt->bind_param("ii", $generation, $player_id);
         if ($stmt->execute()) {
-            $message = "Player updated successfully.";
+            $success_message = "Player updated successfully.";
         } else {
             $message = "Error updating player.";
         }
@@ -158,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_player'])) {
             $stmt->close();
 
             $conn->commit();
-            $message = "Player and its associated entries deleted successfully.";
+            $success_message = "Player and its associated entries deleted successfully.";
         } catch (Exception $e) {
             $conn->rollback();
             $message = "Error deleting player: " . htmlspecialchars($e->getMessage());
@@ -170,28 +171,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_player'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>function openForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "block"; // Show the form
+  } 
+}
+
+function closeForm(id) {
+  let form = document.getElementById("edit_form_" + id);
+  if (form) {
+    form.style.display = "none"; // Hide the form
+  }
+}
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Players - VideoStore</title>
+    <link rel="stylesheet" href="style sheet\total_style.css">
 </head>
 <body>
-    <h2>Manage Players</h2>
+    <h1>Manage Players</h1>
     <nav>
         <ul>
-            <li><a href="admin_manage.php">Back to Manage</a></li>
-            <li><a href="admin_main.php">Dashboard</a></li>
+            <li ><a href = "member_main.php">User View</a></li>
+            <li><a href="admin_main.php">Home</a></li>
+            <li class="dropdown"><button class = 'dropdown_button'>Manage</button>
+            <div class="dropdown-content">
+                <a href="admin_members.php">Members</a>
+                <a href="admin_movie.php">Movies</a>
+                <a href="admin_player.php">Players</a>
+                <a href = "admin_admins.php">Admins</a>
+            </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
 
     <?php if (!empty($message)): ?>
-        <p><?php echo htmlspecialchars($message); ?></p>
+        <p class="error_message"><?php echo htmlspecialchars($message); ?></p>
+    <?php endif; ?>
+    <?php if (!empty($success_message)): ?>
+        <p class="success_message"><?php echo htmlspecialchars($success_message); ?></p>
     <?php endif; ?>
 
-    <h3>Add New Player</h3>
-    <form method="POST" action="">
+
+    <h2>Add New Player</h2>
+    <form class ='form' method="POST" action="">
         <label for="generation">Generation (1-3):</label>
-        <select id="generation" name="generation" required>
+        <select  id="generation" name="generation" required>
+            <option value="">-- Select Generation --</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -214,12 +243,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_player'])) {
         <input type="number" id="rental_period" name="rental_period" min="1" value="14" required>
         <br>
         <input type="submit" name="add_player" value="Add Player">
+        <input type="reset" value="Clear Form">
     </form>
 
-    <h3>Search Players</h3>
-    <form method="POST" action="">
+    <h2>Search Players</h2>
+    <form class="form" method="POST" action="">
         <label for="player_id">Player ID:</label>
-        <input type="text" id="player_id" name="player_id">
+        <input placeholder = "Player ID" type="text" id="player_id" name="player_id">
         <br>
         <label for="generation">Generation:</label>
         <select id="generation" name="generation">
@@ -230,20 +260,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_player'])) {
         </select>
         <br>
         <input type="submit" name="search" value="Search">
+        <input type="reset" value="Clear Form">
     </form>
 
-    <h3>Player List</h3>
+    <h2>Player List</h2>
     <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])): ?>
         <?php if ($no_results): ?>
             <p>No players found matching your criteria.</p>
         <?php else: ?>
-            <?php foreach ($results as $player): ?>
-                <div>
-                    <h4>Player ID: <?php echo htmlspecialchars($player['Player_ID']); ?></h4>
-                    <p><strong>Generation:</strong> <?php echo htmlspecialchars($player['Generation']); ?></p>
-
-                    <h4>Edit Player</h4>
-                    <form method="POST" action="">
+            <table class="table">
+                <tr>
+                    <th>Player ID</th>
+                    <th>Generation</th>
+                    <th>Actions</th>
+                </tr>
+                <?php foreach ($results as $player): ?>
+                    <tr> 
+                        <td><?php echo htmlspecialchars($player['Player_ID']); ?></h4></td>
+                        <td><?php echo htmlspecialchars($player['Generation']); ?></td>
+                        <td class = 'delete'>
+                        <form class="delete_button" method="POST" action="">
+                            <input type="hidden" name="player_id" value="<?php echo htmlspecialchars($player['Player_ID']); ?>">
+                            <input type="submit" name="delete_player" value="Delete Player">
+                        </form>
+                        <form class = 'delete_button' method="POST" action="">
+                            <input type="hidden" name="show_edit" value="1">
+                            <button type="button" name="show_edit" onclick="openForm('<?php echo $player['Player_ID']; ?>')">Edit</button>
+                        </form>
+                        </td>
+                    </tr>
+            
+                <div class = 'edit_form' id ="edit_form_<?php echo $player['Player_ID']; ?>">
+                    <h3>Edit Player</h3>
+                    <form class='form' method="POST" action="">
                         <input type="hidden" name="player_id" value="<?php echo htmlspecialchars($player['Player_ID']); ?>">
                         <label for="generation_<?php echo $player['Player_ID']; ?>">Generation (1-3):</label>
                         <select id="generation_<?php echo $player['Player_ID']; ?>" name="generation" required>
@@ -253,15 +302,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_player'])) {
                         </select>
                         <br>
                         <input type="submit" name="edit_player" value="Update Player">
-                    </form>
-
-                    <form method="POST" action="">
-                        <input type="hidden" name="player_id" value="<?php echo htmlspecialchars($player['Player_ID']); ?>">
-                        <input type="submit" name="delete_player" value="Delete Player">
+                        <button class ='close_edit' type="button" onclick = "closeForm('<?php echo $player['Player_ID']; ?>')">Close</button>
                     </form>
                 </div>
-                <hr>
             <?php endforeach; ?>
+            </table>
         <?php endif; ?>
     <?php else: ?>
         <p>Please use the search form to find players.</p>

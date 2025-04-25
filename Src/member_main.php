@@ -2,7 +2,7 @@
 session_start();
 require_once 'db_connect.php';
 
-if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role']) || $_SESSION['Role'] !== 'Customer') {
+if (!isset($_SESSION['UserID']) || !isset($_SESSION['Role'])) {
     header("Location: member_login.php");
     exit();
 }
@@ -12,12 +12,14 @@ $userID = $_SESSION['UserID'];
 
 $rentals = [];
 $stmt = $conn->prepare("
-    SELECT t.Trans_ID, t.Object_ID, t.Start_date, m.Title, p.Generation, so.Type
+    SELECT t.Trans_ID, t.Object_ID, t.Store_ID, t.Start_date, 
+           m.Title, so.Type, so.Player_ID, p.Generation, s.Address
     FROM Transaction t
-    LEFT JOIN Store_Object so ON t.Object_ID = so.Object_ID
+    JOIN Store s ON s.Store_ID = t.Store_ID
+    JOIN Store_Object so ON t.Object_ID = so.Object_ID
     LEFT JOIN Movie m ON so.Movie_ID = m.Movie_ID
     LEFT JOIN Player p ON so.Player_ID = p.Player_ID
-    WHERE t.UserID = ? AND t.Type = 'Rental' AND t.Status = 'Active'
+    WHERE t.UserID = ? AND t.Type = 'Rental' AND t.Status = 'Active' AND s.Store_ID = t.Store_ID
 ");
 $stmt->bind_param("i", $userID);
 $stmt->execute();
@@ -29,8 +31,9 @@ $stmt->close();
 
 $reservations = [];
 $stmt = $conn->prepare("
-    SELECT t.Trans_ID, t.Object_ID, m.Title, p.Generation, so.Type
+    SELECT t.Trans_ID, t.Object_ID, m.Title, p.Generation, so.Type, s.Address
     FROM Transaction t
+    JOIN Store s ON s.Store_ID = t.Store_ID
     LEFT JOIN Store_Object so ON t.Object_ID = so.Object_ID
     LEFT JOIN Movie m ON so.Movie_ID = m.Movie_ID
     LEFT JOIN Player p ON so.Player_ID = p.Player_ID
@@ -51,6 +54,7 @@ $stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Member Dashboard - VideoStore</title>
+    <link rel="stylesheet" href="style sheet/total_style.css">
 </head>
 <body>
     <header>
@@ -58,10 +62,16 @@ $stmt->close();
     </header>
     <nav class="main-nav">
         <ul>
-            <li><a href="member_main.php">Dashboard</a></li>
-            <li><a href="member_catalog.php">Catalog</a></li>
-            <li><a href="member_reserved.php">My Reserved</a></li>
-            <li><a href="member_stuff.php">My Stuff</a></li>
+            <?php if ($_SESSION['Role'] == 'Admin'): ?>
+                <li><a href="admin_main.php">Admin Dashboard</a></li>
+            <?php endif; ?>
+            <li><a href="member_main.php">Home</a></li>
+            <li class="dropdown"><button class="dropdown_button">Catalog</button>
+                <div class="dropdown-content">
+                    <a href="movies.php">Movies</a>
+                    <a href="players.php">Players</a>
+                </div>
+            </li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </nav>
@@ -71,9 +81,19 @@ $stmt->close();
             <?php if (empty($rentals)): ?>
                 <p class="info-message">You have no active rentals.</p>
             <?php else: ?>
-                <ul class="rental-list">
+                <table class="table">
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Store</th>
+                        <th>Rented On</th>
+                        <th>Action</th>
+                    </tr>
                     <?php foreach ($rentals as $rental): ?>
-                        <li>
+                        <tr >
+                            <td> <?php echo htmlspecialchars($rental['Trans_ID']); ?></td>
+                        <td >
                             <?php 
                             if ($rental['Generation']) {
                                 echo "Player (Generation: " . htmlspecialchars($rental['Generation']) . ")";
@@ -81,12 +101,14 @@ $stmt->close();
                                 echo htmlspecialchars($rental['Title']);
                             }
                             ?>
-                            - Type: <?php echo htmlspecialchars($rental['Type']); ?>, 
-                            Rented on: <?php echo htmlspecialchars($rental['Start_date']); ?>
-                            (<a href="return.php?trans_id=<?php echo htmlspecialchars($rental['Trans_ID']); ?>">Return</a>)
-                        </li>
+                        </td>
+                        <td ><?php echo htmlspecialchars($rental['Type']); ?></td>
+                        <td> <?php echo htmlspecialchars($rental['Address']); ?> </td>
+                        <td> <?php echo htmlspecialchars($rental['Start_date']); ?></td>
+                        <td class="link"><a href="return.php?trans_id=<?php echo htmlspecialchars($rental['Trans_ID']); ?>">Return</a></td>
+                        </tr>
                     <?php endforeach; ?>
-                </ul>
+                        </table >
             <?php endif; ?>
         </section>
         <section>
@@ -94,21 +116,29 @@ $stmt->close();
             <?php if (empty($reservations)): ?>
                 <p class="info-message">You have no active reservations.</p>
             <?php else: ?>
-                <ul class="reservation-list">
+                
+                <table class="table">
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Store</th>
+                        <th>Action</th>
+                    </tr>
                     <?php foreach ($reservations as $reservation): ?>
-                        <li>
-                            <?php 
+                        <tr >
+                           <td><?php 
                             if ($reservation['Generation']) {
                                 echo "Player (Generation: " . htmlspecialchars($reservation['Generation']) . ")";
                             } else {
                                 echo htmlspecialchars($reservation['Title']);
                             }
-                            ?>
-                            - Type: <?php echo htmlspecialchars($reservation['Type']); ?>
-                            (<a href="checkout.php?trans_id=<?php echo htmlspecialchars($reservation['Trans_ID']); ?>&object_id=<?php echo htmlspecialchars($reservation['Object_ID']); ?>">Checkout</a>)
-                        </li>
+                            ?></td> 
+                            <td> <?php echo htmlspecialchars($reservation['Type']); ?> </td>
+                            <td> <?php echo htmlspecialchars($reservation['Address']); ?></td>
+                            <td class="link"><a href="checkout.php?trans_id=<?php echo htmlspecialchars($reservation['Trans_ID']); ?>&object_id=<?php echo htmlspecialchars($reservation['Object_ID']); ?>">Checkout</a></td>
+                        </tr>
                     <?php endforeach; ?>
-                </ul>
+                        </table >
             <?php endif; ?>
         </section>
     </main>
