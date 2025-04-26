@@ -2,7 +2,7 @@
 
 We have envisioned a universe where streaming services yet do not exist. In this universe, we have a video store that allows users to rent movies, and its admins to manage the store.
 
----
+## Usage
 
 To run the project, run `schema.sql` to create the database and feel free to use our `populating_schema.sql` to populate the database with some data. Make sure to update `db_connect.php` with your database credentials.
 
