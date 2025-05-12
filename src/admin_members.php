@@ -99,7 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_member'])) {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = "Invalid email format.";
     } elseif($email) {
-        // Check if the email already exists
         $stmt = $conn->prepare("SELECT COUNT(*) FROM Member WHERE Email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -111,7 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_member'])) {
             $message = "Error signing up. Email is already in use.";
         }
      } elseif ($phone) {
-            // Check if the phone already exists
             if ($phone) {
                 $stmt = $conn->prepare("SELECT COUNT(*) FROM Member WHERE Phone = ?");
                 $stmt->bind_param("s", $phone);
